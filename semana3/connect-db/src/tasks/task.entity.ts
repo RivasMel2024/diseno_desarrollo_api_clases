@@ -1,17 +1,27 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
-import { User } from 'src/users/user.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
+import { User } from '../users/user.entity';
+import { Categoria } from '../categorias/categoria.entity';
 
 @Entity()
 export class Task {
-    @PrimaryGeneratedColumn()
-    id: number;
+  @PrimaryGeneratedColumn()
+  id!: number;
 
-    @Column()
-    titulo: string;
+  @Column()
+  titulo!: string;
 
-    @Column({ default: false })
-    completada: boolean;
+  @Column({ type: 'text', nullable: true })
+  descripcion!: string | null;
 
-    @ManyToOne(()=> User, (user) => user.tareas, {eager: true })
-    user: User;
+  @CreateDateColumn()
+  fechaCreacion!: Date;
+
+  @Column({ default: false })
+  completada!: boolean;
+
+  @ManyToOne(() => User, (user) => user.tareas, { eager: true })
+  user!: User;
+
+  @ManyToOne(() => Categoria, (categoria) => categoria.tareas, { nullable: false })
+  categoria!: Categoria;
 }

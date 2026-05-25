@@ -1,18 +1,16 @@
 const obtenerPostConAutor = async (postId) => {
-    try {
-        const postResponse = await fetch(`https://jsonplaceholder.typicode.com/posts/${postId}`)
-        const postData = await postResponse.json();
+    const postResponse = await fetch(`http://jsonplaceholder.typicode.com/posts/${postId}`) // primeor obtenemos el post con el id que nos pasan por parámetro
+    const post = await postResponse.json() // luego obtenemos el json del post para poder acceder a su userId
 
-        const userResponse = await fetch(`https://jsonplaceholder.typicode.com/users/${postData.userId}`);
-        const userData = await userResponse.json();
+    const userId = post.userId // una vez qye 
+    const userResponse = await fetch (`http://jsonplaceholder.typicode.com/users/${userId}`)
+    const user = await userResponse.json()
 
-        return {
-            post: postData.title,
-            autor: userData
-        };
-    } catch (error) {
-        console.error('Error al obtener los datos:', error);
-    }
-};
+    console.log({
+        titulo: post.title,
+        descripcion: post.body,
+        autor: user.name
+    });
+}
 
-obtenerPostConAutor(1).then(resultado => console.log(resultado));
+obtenerPostConAutor(2)
