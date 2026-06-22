@@ -1,0 +1,31 @@
+{
+  "name": "express-mocha-example",
+  "version": "1.0.0",
+  "description": "Ejemplo con Express, Mocha y Chai",
+  "main": "dist/server.js",
+  "scripts": {
+    "start": "ts-node src/server.ts",
+    "build": "tsc",
+    "test": "mocha"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.3.20",
+    "@types/express": "^5.0.6",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^26.0.0",
+    "@types/supertest": "^7.2.0",
+    "chai": "^4.5.0",
+    "mocha": "^10.8.2",
+    "supertest": "^7.2.2",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}
