@@ -1,0 +1,332 @@
+{
+  "info": {
+    "name": "Freelancer-Hub",
+    "_postman_id": "3f8129ea-f845-4f9e-9b3a-8a4e6f2f1c21",
+    "description": "Coleccion de pruebas para validar los requerimientos del documento del parcial (auth JWT, rutas publicas/protegidas, DTOs y Swagger).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "email", "value": "melisa.rivas@hub.com" },
+    { "key": "password", "value": "123456" },
+    { "key": "accessToken", "value": "" },
+    { "key": "userId", "value": "" },
+    { "key": "createdServiceId", "value": "" },
+    { "key": "lastServiceTitle", "value": "Servicio QA FreelancerHub" }
+  ],
+  "item": [
+    {
+      "name": "1) Login simulado - OK (POST /auth/login)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"melisa.rivas@hub.com\",\n  \"password\": \"123456\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 201 (login OK)', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "",
+              "const data = pm.response.json();",
+              "pm.test('Retorna access_token', function () {",
+              "  pm.expect(data).to.have.property('access_token');",
+              "  pm.expect(data.access_token).to.be.a('string').and.not.empty;",
+              "});",
+              "",
+              "pm.collectionVariables.set('accessToken', data.access_token);",
+              "",
+              "// Decodificar JWT para obtener sub (owner/provider id)",
+              "const token = data.access_token;",
+              "const base64Url = token.split('.')[1];",
+              "const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');",
+              "const jsonPayload = decodeURIComponent(",
+              "  atob(base64).split('').map(function(c) {",
+              "    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);",
+              "  }).join('')",
+              ");",
+              "const payload = JSON.parse(jsonPayload);",
+              "pm.collectionVariables.set('userId', String(payload.sub));",
+              "",
+              "pm.test('JWT payload contiene sub', function () {",
+              "  pm.expect(payload).to.have.property('sub');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2) Login simulado - credenciales invalidas (POST /auth/login)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"oscar.gutierrez@hub.com\",\n  \"password\": \"incorrecta\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 401 cuando credenciales son invalidas', function () {",
+              "  pm.response.to.have.status(401);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3) Swagger activo (GET /api-json)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api-json",
+          "host": ["{{baseUrl}}"],
+          "path": ["api-json"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200 en spec de Swagger', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const spec = pm.response.json();",
+              "pm.test('Spec contiene rutas clave', function () {",
+              "  pm.expect(spec).to.have.property('paths');",
+              "  pm.expect(spec.paths).to.have.property('/auth/login');",
+              "  pm.expect(spec.paths).to.have.property('/public/services');",
+              "  pm.expect(spec.paths).to.have.property('/services');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4) Listado publico de servicios (GET /public/services sin token)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/public/services",
+          "host": ["{{baseUrl}}"],
+          "path": ["public", "services"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200 en endpoint publico', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const data = pm.response.json();",
+              "pm.test('Respuesta es array', function () {",
+              "  pm.expect(data).to.be.an('array');",
+              "});",
+              "",
+              "data.forEach((item) => {",
+              "  pm.expect(item).to.have.property('title');",
+              "  pm.expect(item).to.have.property('category');",
+              "  pm.expect(item).to.have.property('price');",
+              "  pm.expect(item).to.have.property('providerName');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5) Publicar servicio SIN token (POST /services -> 401)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Servicio sin auth\",\n  \"category\": \"Diseno\",\n  \"description\": \"Debe fallar por falta de token\",\n  \"price\": 50\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/services",
+          "host": ["{{baseUrl}}"],
+          "path": ["services"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 401 en ruta protegida sin token', function () {",
+              "  pm.response.to.have.status(401);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6) Publicar servicio CON token (POST /services)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('lastServiceTitle', 'Servicio QA ' + Date.now());"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 201 creando servicio autenticado', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "",
+              "const data = pm.response.json();",
+              "pm.collectionVariables.set('createdServiceId', String(data.id));",
+              "",
+              "pm.test('Respuesta incluye campos del servicio', function () {",
+              "  pm.expect(data).to.have.property('id');",
+              "  pm.expect(data).to.have.property('title', pm.collectionVariables.get('lastServiceTitle'));",
+              "  pm.expect(data).to.have.property('category');",
+              "  pm.expect(data).to.have.property('description');",
+              "  pm.expect(data).to.have.property('price');",
+              "});",
+              "",
+              "pm.test('owner/provider viene del JWT (no del body)', function () {",
+              "  pm.expect(data).to.have.property('provider');",
+              "  pm.expect(String(data.provider.id)).to.eql(pm.collectionVariables.get('userId'));",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"{{lastServiceTitle}}\",\n  \"category\": \"Desarrollo\",\n  \"description\": \"API REST para negocio local con documentacion\",\n  \"price\": 180\n }"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/services",
+          "host": ["{{baseUrl}}"],
+          "path": ["services"]
+        }
+      }
+    },
+    {
+      "name": "7) Validacion DTO (POST /services body invalido -> 400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"category\": \"Marketing\",\n  \"description\": \"\",\n  \"price\": -10\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/services",
+          "host": ["{{baseUrl}}"],
+          "path": ["services"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 400 por validacion DTO', function () {",
+              "  pm.response.to.have.status(400);",
+              "});",
+              "",
+              "const data = pm.response.json();",
+              "pm.test('Retorna mensajes de validacion', function () {",
+              "  pm.expect(data).to.have.property('message');",
+              "  pm.expect(data.message).to.be.an('array').and.not.empty;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "8) Verificar servicio creado aparece en listado publico (GET /public/services)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/public/services",
+          "host": ["{{baseUrl}}"],
+          "path": ["public", "services"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200 en listado publico', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const data = pm.response.json();",
+              "const title = pm.collectionVariables.get('lastServiceTitle');",
+              "const found = data.find((s) => s.title === title);",
+              "",
+              "pm.test('El servicio publicado se lista publicamente', function () {",
+              "  pm.expect(found, 'No se encontro el servicio en listado publico').to.exist;",
+              "  pm.expect(found).to.have.property('providerName');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
