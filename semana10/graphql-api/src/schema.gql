@@ -1,0 +1,68 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Product {
+  id: Int!
+  name: String!
+  price: Float!
+  category: Category!
+}
+
+type Category {
+  id: Int!
+  name: String!
+  products: [Product!]
+}
+
+type ProductConnection {
+  items: [Product!]!
+  total: Int!
+}
+
+type Query {
+  products(filter: ProductFilterInput, pagination: PaginationInput): ProductConnection!
+  product(id: Int!): Product!
+  categories: [Category!]!
+  category(id: Int!): Category!
+}
+
+input ProductFilterInput {
+  categoryId: Int
+  priceMin: Float
+  priceMax: Float
+}
+
+input PaginationInput {
+  skip: Int = 0
+  take: Int = 10
+}
+
+type Mutation {
+  createProduct(input: CreateProductInput!): Product!
+  updateProduct(input: UpdateProductInput!): Product!
+  removeProduct(id: Int!): Boolean!
+  createCategory(input: CreateCategoryInput!): Category!
+  login(input: LoginInput!): String!
+}
+
+input CreateProductInput {
+  name: String!
+  price: Float!
+  categoryId: Int!
+}
+
+input UpdateProductInput {
+  id: Int!
+  name: String
+  price: Float
+}
+
+input CreateCategoryInput {
+  name: String!
+}
+
+input LoginInput {
+  username: String!
+  password: String!
+}
